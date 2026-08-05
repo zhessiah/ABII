@@ -1,0 +1,18 @@
+Metadata-Version: 2.1
+Name: lbforaging
+Version: 1.1.1
+Summary: Level Based Foraging Environment
+Home-page: https://github.com/semitable/lb-foraging
+Author: Filippos Christianos
+License: UNKNOWN
+Platform: UNKNOWN
+Classifier: Intended Audience :: Developers
+Classifier: Programming Language :: Python :: 3.4
+Classifier: Programming Language :: Python :: 3.5
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Provides-Extra: test
+License-File: LICENSE
+
+UNKNOWN
+

@@ -1,0 +1,28 @@
+env: "gymma"
+
+
+env_args:
+  key: null
+  # time_limit: 50
+  # num_agents: 5     # 添加总智能体数量参数
+  # time_limit: 50
+  # num_agents: 3     # 添加总智能体数量参数
+ 
+  # time_limit: 25
+  # num_agents: 8     # 添加总智能体数量参数
+
+  num_agents: 4   # 添加总智能体数量参数
+  time_limit: 50
+  pretrained_wrapper: null
+  continuous_actions: True  # 添加连续动作空间参数
+  num_good: 2              # 添加合作智能体数量参数
+  num_adversaries: 1       # 添加对抗智能体数量参数
+  
+
+test_greedy: True
+test_nepisode: 100
+test_interval: 50000
+log_interval: 50000
+runner_log_interval: 10000
+learner_log_interval: 10000
+t_max: 2050000

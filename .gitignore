@@ -1,0 +1,20 @@
+*.pyc
+__pycache__/
+*.log
+
+# PyTorch files
+*.th
+*.pth
+ 
+# TensorFlow event files
+*.tfevents.*
+*.tfevent.*
+events.out.tfevents.*
+**/models/results/
+a2r_results/
+smpe
+mpe
+me
+myReadme
+myReadme
+myReadme.md

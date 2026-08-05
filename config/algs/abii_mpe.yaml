@@ -1,0 +1,168 @@
+# --- Central-V specific parameters ---
+game: "mpe"
+action_selector: "soft_policies"
+mask_before_softmax: True
+
+# --- MAC和Agent的配置 ---
+mac: "adv_mac"          # 使用我们新的对抗性MAC
+agent: "rnn_ns"         # 常规智能体的网络类型
+adv_agent: "adv_rnn_agent" # 对抗智能体的网络类型 (我们新增的)
+runner: "parallel"
+# runner: "episode"
+
+
+# --- 对抗训练参数 ---
+random_adversary: True   # 启用随机对抗者选择
+agent_adversary: 0         # 默认的对抗者ID (如果random_adversary为False)
+adv_prob: 0.5              # 在每个回合中出现对抗者的概率
+victim_interval: 1         # 对抗者出现的间隔
+super_adversary: False     # 是否启用超级对抗者 (需要特定的adv_agent实现)
+adapt_adversary: False     # 是否自适应地选择对抗者
+
+
+buffer_size: 500
+batch_size_run: 50
+batch_size: 64
+# buffer_cpu_only: False
+test_nepisode: 10
+test_interval: 2000
+log_interval: 1000
+
+# 检查点和加载设置
+checkpoint_path: ""
+load_step: 0
+save_model: True
+save_model_interval: 50000
+
+# 目标网络更新参数
+target_update_interval_or_tau: 0.005
+target_update_filter: 150000  # 150000           
+period_filter_update: 20000   # 20000   50000               
+update_filter_critic: 1      # 200000    
+stop_time_vae: 100000000000000
+lr: 0.0005
+lr_belief: 0.0005  # 为信念网络添加独立的学习率 
+
+
+# 观察设置
+obs_agent_id: True
+obs_last_action: False
+obs_individual_obs: False
+use_obs_normalization: True
+
+
+
+# 智能体输出和学习器设置
+agent_output_type: "pi_logits"
+learner: "actor_critic_learner"
+entropy_coef: 0.01
+use_rnn: True
+use_gumbel: True
+standardise_returns: True
+standardise_rewards: True
+q_nstep: 5
+critic_type: "cv_critic"
+
+name: "smpe"
+
+use_dynamics: True
+dynamics_controller: "vae_controller"
+use_w: True
+use_w_critic: True
+use_intrinsic: False    
+use_z_inputs: True
+use_clip_weights: True
+use_2layer_filter: True
+
+
+# --- 信念网络参数 ---
+belief_hidden_sizes: [64, 64] # 信念网络的隐藏层维度
+belief_use_rnn: True          # 信念网络是否使用RNN
+lambda_belief_loss: 0.1
+use_hard_belief: False
+hard_belief_thres: 0.8
+hard_belief_weight: 0.5
+use_belief_consistency: True
+consistency_weight: 0.1
+
+
+clip_min: 0.1   # 0.1
+clip_max: 1
+
+# --- 网络架构参数 ---
+hidden_dim: 128
+latent_dim: 64
+adv_hidden_sizes: [64, 64]   # 对抗VAE隐藏层大小
+
+
+lr_state_vae: 0.0005
+lr_agent_model: 0.0005
+lr_filter: 0.0005     # 0.00001    
+lr_w_critic: 0.0000005     # 0.00001    0.0000005
+
+state_epochs: 10              
+agent_epochs: 15               
+state_vae_batch_size: 15
+agent_vae_batch_size: 15
+state_vae_update_period: 2000   
+agent_vae_update_period: 2000  
+t_max: 10000000   
+pretrain_steps: 10000
+# pretrain_steps: 100000
+stop_train_state_vae: 550000000
+
+
+# --- 损失权重参数 ---
+l2_lambda: 0.1
+lambda_rec: 1
+kl_prior_agents_lambda: 0.001
+lambda_kl_loss_state: 0.1
+lambda_kl_loss_obs: 0.1
+adv_beta: 0.3 # 对抗智能体的KL散度权重
+beta: 0.1     # VAE的KL散度权重
+lambda_aux_loss: 1
+lambda_w_critic: 0.001
+z_rew_coeff: 0.0
+obs_rew_coeff: 0.0
+
+# --- VAE Controller 特定参数 ---
+# (注意：对抗性参数已被移至顶层，因为它们现在由Runner和MAC使用)
+vae_controller:
+  # 动作相关
+  use_actions: True
+  use_rewards: True
+  use_aux: True
+  use_detach: True
+
+use_cuda: True
+device: "cuda"
+
+lr_adversary_model: 0.002
+lr_agent_model_default: 0.001
+
+# 消融
+# 过滤器的作用
+use_am_filter: True
+# 信念 + 过滤器
+use_belief_in_filter: True
+# 禁用信念网络 退化为smpe2
+disable_belief: False
+use_belief_intrinsic: True
+
+# --- 黑盒攻击测试配置 ---
+test_adversary: True         
+test_attack_type: "mirrored"   
+test_adv_agent_id: 0         # 强行指定 0 号智能体为内鬼 
+evaluate: False
+use_tta: False              # 开启 TTA 逻辑 (对照组则设为 False)
+test_total_steps: 9000    
+test_nepisode: 1 
+lr_tta: 0.0005  
+
+use_fgsm_training: false
+fgsm_start_t: 50000      # 建议与 pretrain_steps 对齐，策略稳定后再施加
+fgsm_epsilon: 0.05
+fgsm_loss_type: "max_entropy"   # 可选：max_entropy / min_correct / targeted
+
+
+
