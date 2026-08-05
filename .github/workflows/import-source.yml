@@ -2,20 +2,22 @@ name: Import ABII source tree
 
 on:
   workflow_dispatch:
-  push:
+  pull_request:
     branches: [main]
-    paths:
-      - .github/workflows/import-source.yml
+    types: [opened, synchronize]
 
 permissions:
   contents: write
 
 jobs:
   import:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     steps:
-      - name: Check out repository
+      - name: Check out the source branch
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
 
       - name: Download the released source tree
         shell: python
@@ -132,6 +134,8 @@ jobs:
         run: sha256sum --check .github/source-checksums.sha256
 
       - name: Commit the repository contents
+        env:
+          TARGET_BRANCH: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -141,4 +145,4 @@ jobs:
             exit 0
           fi
           git commit -m "chore: import ABII source tree"
-          git push origin HEAD:main
+          git push origin "HEAD:${TARGET_BRANCH}"
