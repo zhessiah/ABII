@@ -1,0 +1,143 @@
+name: Import ABII source tree
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/import-source.yml
+
+permissions:
+  contents: write
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Download the released source tree
+        shell: python
+        run: |
+          from __future__ import annotations
+
+          import shutil
+          from pathlib import Path
+          from urllib.parse import quote
+
+          import requests
+          from requests.adapters import HTTPAdapter
+          from urllib3.util.retry import Retry
+
+          repo_id = "ABIDE-1C60"
+          api_root = f"https://anonymous.4open.science/api/repo/{repo_id}"
+          workspace = Path.cwd()
+          staging = workspace / ".source-import"
+          staging.mkdir(exist_ok=True)
+
+          session = requests.Session()
+          retries = Retry(
+              total=5,
+              backoff_factor=1.0,
+              status_forcelist=(429, 500, 502, 503, 504),
+              allowed_methods=("GET",),
+          )
+          session.mount("https://", HTTPAdapter(max_retries=retries))
+
+          response = session.get(f"{api_root}/files/", timeout=60)
+          response.raise_for_status()
+          tree = response.json()
+
+          paths: list[str] = []
+
+          def walk(node: dict, prefix: str = "") -> None:
+              for name, value in node.items():
+                  current = f"{prefix}/{name}"
+                  if isinstance(value, dict) and "size" in value:
+                      paths.append(current)
+                  elif isinstance(value, dict):
+                      walk(value, current)
+
+          walk(tree)
+
+          for index, remote_path in enumerate(sorted(paths), start=1):
+              encoded_path = quote(remote_path, safe="/")
+              file_response = session.get(
+                  f"{api_root}/file{encoded_path}", timeout=120
+              )
+              file_response.raise_for_status()
+              destination = staging / remote_path.lstrip("/")
+              destination.parent.mkdir(parents=True, exist_ok=True)
+              destination.write_bytes(file_response.content)
+              print(f"[{index:03d}/{len(paths):03d}] {remote_path.lstrip('/')}")
+
+          for source in staging.rglob("*"):
+              if not source.is_file():
+                  continue
+              relative = source.relative_to(staging)
+              relative_posix = relative.as_posix()
+              if relative_posix == "README.md":
+                  continue
+              if relative_posix.startswith("assets/"):
+                  continue
+              if relative_posix.startswith(".github/"):
+                  continue
+              destination = workspace / relative
+              destination.parent.mkdir(parents=True, exist_ok=True)
+              shutil.copy2(source, destination)
+
+          renames = {
+              workspace / "config/algs/abide.yaml": workspace / "config/algs/abii.yaml",
+              workspace / "config/algs/abide_mpe.yaml": workspace / "config/algs/abii_mpe.yaml",
+          }
+          for old_path, new_path in renames.items():
+              if old_path.exists():
+                  new_path.parent.mkdir(parents=True, exist_ok=True)
+                  old_path.replace(new_path)
+
+          shutil.rmtree(staging)
+
+      - name: Verify the imported archive exactly
+        shell: python
+        run: |
+          from pathlib import Path
+
+          root = Path.cwd()
+          manifest = root / ".github/source-checksums.sha256"
+          expected = {
+              line.split("  ", 1)[1]
+              for line in manifest.read_text().splitlines()
+              if line.strip()
+          }
+          actual = {
+              path.relative_to(root).as_posix()
+              for path in root.rglob("*")
+              if path.is_file()
+              and path.relative_to(root).as_posix() != "README.md"
+              and not path.relative_to(root).as_posix().startswith("assets/")
+              and not path.relative_to(root).as_posix().startswith(".github/")
+              and not path.relative_to(root).as_posix().startswith(".git/")
+          }
+
+          missing = sorted(expected - actual)
+          unexpected = sorted(actual - expected)
+          if missing or unexpected:
+              raise SystemExit(
+                  "Imported file set differs from the supplied archive.\n"
+                  f"Missing: {missing}\nUnexpected: {unexpected}"
+              )
+
+      - name: Verify file contents
+        run: sha256sum --check .github/source-checksums.sha256
+
+      - name: Commit the repository contents
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No source changes to commit."
+            exit 0
+          fi
+          git commit -m "chore: import ABII source tree"
+          git push origin HEAD:main
