@@ -45,7 +45,7 @@ The latent Byzantine intention is fixed throughout the episode, while harmful be
 ## Method
 
 <div align="center">
-  <img src="assets/abii-framework.png" alt="ABII framework" width="100%" />
+  <img src="assets/abii-framework.svg" alt="ABII framework" width="100%" />
 </div>
 
 ABII forms a closed coordination loop with four coupled components:
@@ -107,7 +107,7 @@ The repository includes configurations for the SMAC and MPE benchmark environmen
 ## Results
 
 <div align="center">
-  <img src="assets/abii-main-results.png" alt="ABII results on SMAC and MPE" width="100%" />
+  <img src="assets/abii-main-results.svg" alt="ABII results on SMAC and MPE" width="100%" />
 </div>
 
 Across the reported DLA experiments, ABII obtains the strongest final performance on all four SMAC maps and all four MPE team sizes. The advantage is most pronounced in the more difficult coordination settings, where selectively using posterior-guided teammate information limits the propagation of belief lag into state estimation and policy learning.
@@ -117,7 +117,7 @@ The paper reports means over five independent runs, with shaded regions represen
 ## Posterior Belief Evolution
 
 <div align="center">
-  <img src="assets/abii-belief-evolution.png" alt="Evolution of posterior intention beliefs" width="82%" />
+  <img src="assets/abii-belief-evolution.svg" alt="Evolution of posterior intention beliefs" width="82%" />
 </div>
 
 In the illustrated five-agent case, posterior mass progressively concentrates on the Byzantine agent after discriminative behavior becomes available. This separation provides the teammate-specific signal used by the belief-guided information gate.
