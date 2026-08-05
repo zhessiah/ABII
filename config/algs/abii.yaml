@@ -1,0 +1,171 @@
+# --- SMPE-SMAC 配置文件 ---
+game: "smac"
+action_selector: "soft_policies"
+mask_before_softmax: True
+
+# --- MAC和Agent的配置 ---
+mac: "adv_mac"          # 使用对抗性MAC (适合SMAC对抗环境)
+agent: "rnn_ns"         # 常规智能体的网络类型
+adv_agent: "adv_rnn_agent" # 对抗智能体的网络类型
+runner: "parallel" # 使用EpisodeRunner (适合SMAC)
+
+# --- 对抗训练参数 (SMAC非常适合对抗训练) ---
+random_adversary: True   # 启用随机对抗者选择
+agent_adversary: 0         # 默认的对抗者ID
+adv_prob: 0.5              # 在每个回合中出现对抗者的概率
+victim_interval: 1         # 对抗者出现间隔
+super_adversary: False     # 是否启用超级对抗者
+adapt_adversary: True      # 自适应选择对抗者 
+
+use_cuda: True
+device: "cuda"
+
+# 缓冲区和批次设置
+buffer_size: 500
+batch_size_run: 5
+batch_size: 32
+
+dynamics_controller: "vae_controller"
+# 学习和测试设置
+lr: 0.0005
+lr_belief: 0.0005  # 为信念网络添加独立的学习率
+# test_nepisode: 10
+test_interval: 2000
+log_interval: 1000
+
+# 检查点和模型保存
+checkpoint_path: ""
+load_step: 0
+save_model: True
+save_model_interval: 100000
+
+# 目标网络更新参数
+target_update_interval_or_tau: 0.005
+target_update_filter: 150000  # 150000           
+period_filter_update: 20000   # 20000   50000
+update_filter_critic: 1
+stop_time_vae: 100000000000000
+
+lr_state_vae: 0.0005
+lr_agent_model: 0.0005
+lr_filter: 0.0005     # 0.00001    
+lr_w_critic: 0.0000005 
+
+# 观察设置
+obs_agent_id: True
+obs_last_action: False
+obs_individual_obs: False
+
+use_obs_normalization: True
+
+# 智能体输出和学习器设置
+agent_output_type: "pi_logits"
+learner: "actor_critic_learner"
+entropy_coef: 0.01
+use_rnn: True
+use_gumbel: True
+standardise_returns: False
+standardise_rewards: True
+q_nstep: 5
+critic_type: "cv_critic"
+
+# --- 网络架构参数 ---
+hidden_dim: 256
+latent_dim: 64
+adv_hidden_sizes: [64, 64]   # 对抗VAE隐藏层大小
+
+# --- SMPE核心参数 ---
+name: "smpe"
+
+# --- 信念网络参数 ---
+belief_hidden_sizes: [128, 128] # 信念网络的隐藏层维度
+belief_use_rnn: True          # 信念网络是否使用RNN
+lambda_belief_loss: 0.1
+use_hard_belief: False
+hard_belief_thres: 0.8
+hard_belief_weight: 0.5
+use_belief_consistency: True
+consistency_weight: 0.1
+
+# VAE和动力学模型
+use_dynamics: True
+use_w: True
+w_upd: True
+use_intrinsic: True        # SMAC中启用内在奖励
+use_z_inputs: True
+use_w_critic: True
+use_clip_weights: True
+use_2layer_filter: True
+clip_min: 0.1   # 0.1
+clip_max: 1
+
+# VAE训练参数
+state_epochs: 10              
+agent_epochs: 15               
+state_vae_batch_size: 15
+agent_vae_batch_size: 15
+state_vae_update_period: 2000   
+agent_vae_update_period: 2000
+t_max: 2200000   
+pretrain_steps: 0
+# 减少试一下
+            
+stop_train_state_vae: 550000000
+
+# --- 损失权重参数 ---
+l2_lambda: 0.1
+lambda_rec: 1
+kl_prior_agents_lambda: 0.001
+lambda_kl_loss_state: 0.1
+lambda_kl_loss_obs: 0.1
+lambda_aux_loss: 1
+lambda_w_critic: 0.001
+z_rew_coeff: 0.0
+obs_rew_coeff: 0.0
+
+# 对抗训练特定参数
+beta: 0.1                  
+adv_beta: 0.2             
+
+vae_controller:
+  # 动作相关
+  use_actions: True
+  use_rewards: True
+  use_aux: True
+  use_detach: True
+
+mixer: null
+
+# 优化器设置
+optim_alpha: 0.99
+optim_eps: 0.00001
+grad_norm_clip: 10
+
+lr_adversary_model: 0.002
+lr_agent_model_default: 0.001
+
+# 消融
+# 过滤器的作用
+use_am_filter: True
+# 信念 + 过滤器
+use_belief_in_filter: True
+#True： 禁用信念网络 退化为smpe2
+disable_belief: False
+
+# --- 黑盒攻击测试配置 ---
+test_adversary: True         
+test_attack_type: "policy_adv"   
+test_adv_agent_id: 0         # 强行指定 0 号智能体为内鬼 
+evaluate: True
+use_tta: True                # 开启 TTA 逻辑 (对照组则设为 False)
+test_total_steps: 3000     # 总共在测试期被攻击 20,000 步
+test_nepisode: 1 
+lr_tta: 0.0001          
+use_belief_intrinsic: True
+# 这个参数就会开启潜在性攻击
+test_attack_start_ratio: 0
+
+use_fgsm_training: true
+fgsm_start_t: 50000      # 建议与 pretrain_steps 对齐，策略稳定后再施加
+fgsm_epsilon: 0.05
+fgsm_loss_type: "max_entropy"   # 可选：max_entropy / min_correct / targeted
